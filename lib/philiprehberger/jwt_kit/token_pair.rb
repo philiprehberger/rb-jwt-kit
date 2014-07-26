@@ -14,7 +14,7 @@ module Philiprehberger
       def generate(payload, config)
         access_token = Encoder.encode(payload, config)
 
-        refresh_payload = payload.merge("type" => "refresh")
+        refresh_payload = payload.merge('type' => 'refresh')
         original_expiration = config.expiration
         config.expiration = config.refresh_expiration
         refresh_token = Encoder.encode(refresh_payload, config)
@@ -31,7 +31,7 @@ module Philiprehberger
       # @raise [InvalidToken] if the token is not a refresh token
       def refresh(refresh_token, config)
         payload = Decoder.decode(refresh_token, config)
-        raise InvalidToken, "Token is not a refresh token" unless payload["type"] == "refresh"
+        raise InvalidToken, 'Token is not a refresh token' unless payload['type'] == 'refresh'
 
         new_payload = payload.reject { |k, _| %w[exp iat jti iss type].include?(k) }
         Encoder.encode(new_payload, config)

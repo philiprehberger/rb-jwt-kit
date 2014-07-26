@@ -13,17 +13,17 @@ module Philiprehberger
       # @return [String] signed JWT token
       # @raise [Error] if no secret is configured
       def encode(payload, config)
-        raise Error, "Secret is required for encoding" unless config.secret
+        raise Error, 'Secret is required for encoding' unless config.secret
 
-        header = { "alg" => config.algorithm_name, "typ" => "JWT" }
+        header = { 'alg' => config.algorithm_name, 'typ' => 'JWT' }
         now = Time.now.to_i
 
         claims = {
-          "exp" => now + config.expiration,
-          "iat" => now,
-          "jti" => SecureRandom.uuid
+          'exp' => now + config.expiration,
+          'iat' => now,
+          'jti' => SecureRandom.uuid
         }
-        claims["iss"] = config.issuer if config.issuer
+        claims['iss'] = config.issuer if config.issuer
 
         merged = claims.merge(payload.transform_keys(&:to_s))
 

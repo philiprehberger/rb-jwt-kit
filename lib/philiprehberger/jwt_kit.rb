@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-require "openssl"
-require "json"
-require "securerandom"
-require "base64"
-require_relative "jwt_kit/version"
-require_relative "jwt_kit/configuration"
-require_relative "jwt_kit/encoder"
-require_relative "jwt_kit/decoder"
-require_relative "jwt_kit/token_pair"
-require_relative "jwt_kit/revocation"
+require 'openssl'
+require 'json'
+require 'securerandom'
+require 'base64'
+require_relative 'jwt_kit/version'
+require_relative 'jwt_kit/configuration'
+require_relative 'jwt_kit/encoder'
+require_relative 'jwt_kit/decoder'
+require_relative 'jwt_kit/token_pair'
+require_relative 'jwt_kit/revocation'
 
 module Philiprehberger
   module JwtKit
@@ -59,7 +59,7 @@ module Philiprehberger
       # @raise [RevokedToken] if the token has been revoked
       def decode(token)
         payload = Decoder.decode(token, configuration)
-        raise RevokedToken, "Token has been revoked" if revocation_store.revoked?(token)
+        raise RevokedToken, 'Token has been revoked' if revocation_store.revoked?(token)
 
         payload
       end

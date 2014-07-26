@@ -41,9 +41,9 @@ module Philiprehberger
       # @raise [Error] if the algorithm is unsupported
       def digest_algorithm
         case @algorithm
-        when :hs256 then "SHA256"
-        when :hs384 then "SHA384"
-        when :hs512 then "SHA512"
+        when :hs256 then 'SHA256'
+        when :hs384 then 'SHA384'
+        when :hs512 then 'SHA512'
         else raise Error, "Unsupported algorithm: #{@algorithm}"
         end
       end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "set"
+require 'set'
 
 module Philiprehberger
   module JwtKit
@@ -52,11 +52,11 @@ module Philiprehberger
         private
 
         def extract_jti(token)
-          parts = token.split(".")
+          parts = token.split('.')
           return nil unless parts.length == 3
 
           payload = JSON.parse(Base64.urlsafe_decode64(parts[1]))
-          payload["jti"]
+          payload['jti']
         rescue JSON::ParserError, ArgumentError
           nil
         end
