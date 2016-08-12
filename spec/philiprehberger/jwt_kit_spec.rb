@@ -129,7 +129,7 @@ RSpec.describe Philiprehberger::JwtKit do
     it 'raises InvalidSignature for a tampered token' do
       token = described_class.encode(user_id: 42)
       parts = token.split('.')
-      parts[1] = Base64.urlsafe_encode64('{'user_id':99}', padding: false)
+      parts[1] = Base64.urlsafe_encode64('{"user_id":99}', padding: false)
       tampered = parts.join('.')
       expect { described_class.decode(tampered) }.to raise_error(Philiprehberger::JwtKit::InvalidSignature)
     end
