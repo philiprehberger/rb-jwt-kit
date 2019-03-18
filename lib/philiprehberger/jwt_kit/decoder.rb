@@ -18,7 +18,7 @@ module Philiprehberger
       def decode(token, config)
         raise DecodeError, 'Token must be a string' unless token.is_a?(String)
 
-        parts = token.split('.')
+        parts = token.split('.', -1)
         raise DecodeError, 'Invalid token format: expected 3 segments' unless parts.length == 3
 
         header_segment, payload_segment, signature_segment = parts
