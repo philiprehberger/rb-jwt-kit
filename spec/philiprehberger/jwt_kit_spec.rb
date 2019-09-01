@@ -197,7 +197,7 @@ RSpec.describe Philiprehberger::JwtKit do
     end
 
     it 'raises DecodeError for an integer token' do
-      expect { described_class.decode(12345) }.to raise_error(
+      expect { described_class.decode(12_345) }.to raise_error(
         Philiprehberger::JwtKit::DecodeError, 'Token must be a string'
       )
     end
