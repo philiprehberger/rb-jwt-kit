@@ -28,9 +28,30 @@ module Philiprehberger
         payload = JSON.parse(base64url_decode(payload_segment))
 
         validate_expiration!(payload)
+        validate_not_before!(payload)
         validate_issuer!(payload, config)
+        validate_audience!(payload, config)
 
         payload
+      rescue JSON::ParserError
+        raise DecodeError, 'Invalid token: malformed JSON'
+      end
+
+      # Decodes a JWT token without verifying the signature.
+      #
+      # @param token [String] JWT token
+      # @return [Hash] with :header and :payload keys
+      # @raise [DecodeError] if the token format is invalid
+      def peek(token)
+        raise DecodeError, 'Token must be a string' unless token.is_a?(String)
+
+        parts = token.split('.', -1)
+        raise DecodeError, 'Invalid token format: expected 3 segments' unless parts.length == 3
+
+        header = JSON.parse(base64url_decode(parts[0]))
+        payload = JSON.parse(base64url_decode(parts[1]))
+
+        { header: header, payload: payload }
       rescue JSON::ParserError
         raise DecodeError, 'Invalid token: malformed JSON'
       end
@@ -67,6 +88,17 @@ module Philiprehberger
         raise TokenExpired, 'Token has expired' if exp.to_i <= Time.now.to_i
       end
 
+      # Validates the not-before claim.
+      #
+      # @param payload [Hash] decoded payload
+      # @raise [TokenNotYetValid] if the current time is before nbf
+      def validate_not_before!(payload)
+        nbf = payload['nbf']
+        return unless nbf
+
+        raise TokenNotYetValid, 'Token is not yet valid' if nbf.to_i > Time.now.to_i
+      end
+
       # Validates the issuer claim.
       #
       # @param payload [Hash] decoded payload
@@ -76,6 +108,21 @@ module Philiprehberger
         return unless config.issuer
 
         raise InvalidIssuer, "Invalid issuer: expected #{config.issuer}" unless payload['iss'] == config.issuer
+      end
+
+      # Validates the audience claim.
+      #
+      # @param payload [Hash] decoded payload
+      # @param config [Configuration] JWT configuration
+      # @raise [InvalidAudience] if the audience does not match
+      def validate_audience!(payload, config)
+        return unless config.audience
+
+        token_aud = Array(payload['aud'])
+        expected_aud = Array(config.audience)
+        return if (expected_aud & token_aud).any?
+
+        raise InvalidAudience, "Invalid audience: expected #{config.audience}"
       end
 
       # Constant-time string comparison to prevent timing attacks.

@@ -20,10 +20,12 @@ module Philiprehberger
 
         claims = {
           'exp' => now + config.expiration,
+          'nbf' => now,
           'iat' => now,
           'jti' => SecureRandom.uuid
         }
         claims['iss'] = config.issuer if config.issuer
+        claims['aud'] = config.audience if config.audience
 
         merged = claims.merge(payload.transform_keys(&:to_s))
 

@@ -33,7 +33,7 @@ module Philiprehberger
         payload = Decoder.decode(refresh_token, config)
         raise InvalidToken, 'Token is not a refresh token' unless payload['type'] == 'refresh'
 
-        new_payload = payload.except('exp', 'iat', 'jti', 'iss', 'type')
+        new_payload = payload.except('exp', 'nbf', 'iat', 'jti', 'iss', 'aud', 'type')
         Encoder.encode(new_payload, config)
       end
     end

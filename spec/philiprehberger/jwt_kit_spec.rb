@@ -588,4 +588,116 @@ RSpec.describe Philiprehberger::JwtKit do
       expect(payload['name']).to eq("\u00e9\u00e0\u00fc \u2603 \u{1F600}")
     end
   end
+
+  describe '.peek' do
+    it 'returns header and payload without verification' do
+      token = described_class.encode(user_id: 1)
+      result = described_class.peek(token)
+      expect(result[:header]).to include('alg' => 'HS256', 'typ' => 'JWT')
+      expect(result[:payload]).to include('user_id' => 1)
+    end
+
+    it 'peeks at token with wrong secret' do
+      token = described_class.encode(user_id: 1)
+      described_class.configure { |c| c.secret = 'different-secret' }
+      result = described_class.peek(token)
+      expect(result[:payload]).to include('user_id' => 1)
+    end
+
+    it 'raises on invalid token format' do
+      expect { described_class.peek('not.valid') }.to raise_error(Philiprehberger::JwtKit::DecodeError)
+    end
+
+    it 'raises on non-string input' do
+      expect { described_class.peek(123) }.to raise_error(Philiprehberger::JwtKit::DecodeError)
+    end
+  end
+
+  describe 'audience validation' do
+    before do
+      described_class.configure { |c| c.audience = 'my-api' }
+    end
+
+    it 'includes aud claim when audience is configured' do
+      token = described_class.encode(user_id: 1)
+      result = described_class.peek(token)
+      expect(result[:payload]['aud']).to eq('my-api')
+    end
+
+    it 'validates matching audience' do
+      token = described_class.encode(user_id: 1)
+      payload = described_class.decode(token)
+      expect(payload['aud']).to eq('my-api')
+    end
+
+    it 'raises InvalidAudience when audience does not match' do
+      token = described_class.encode(user_id: 1)
+      described_class.configure { |c| c.audience = 'other-api' }
+      expect { described_class.decode(token) }.to raise_error(Philiprehberger::JwtKit::InvalidAudience)
+    end
+
+    it 'skips audience validation when not configured' do
+      described_class.configure { |c| c.audience = nil }
+      token = described_class.encode(user_id: 1)
+      expect { described_class.decode(token) }.not_to raise_error
+    end
+
+    it 'supports array audience matching' do
+      described_class.configure { |c| c.audience = %w[api-1 api-2] }
+      token = described_class.encode(user_id: 1)
+      described_class.configure { |c| c.audience = 'api-1' }
+      expect { described_class.decode(token) }.not_to raise_error
+    end
+  end
+
+  describe 'not-before (nbf) validation' do
+    it 'includes nbf claim in tokens' do
+      token = described_class.encode(user_id: 1)
+      result = described_class.peek(token)
+      expect(result[:payload]).to have_key('nbf')
+      expect(result[:payload]['nbf']).to be <= Time.now.to_i
+    end
+
+    it 'accepts tokens with nbf in the past' do
+      token = described_class.encode(user_id: 1)
+      expect { described_class.decode(token) }.not_to raise_error
+    end
+
+    it 'raises TokenNotYetValid for future nbf' do
+      token = described_class.encode(nbf: Time.now.to_i + 3600)
+      expect { described_class.decode(token) }.to raise_error(Philiprehberger::JwtKit::TokenNotYetValid)
+    end
+  end
+
+  describe 'pluggable revocation store' do
+    it 'accepts a custom revocation store' do
+      custom_store = Philiprehberger::JwtKit::Revocation::MemoryStore.new
+      described_class.revocation_store = custom_store
+      expect(described_class.revocation_store).to eq(custom_store)
+    end
+
+    it 'uses custom store for revocation' do
+      custom_store = Philiprehberger::JwtKit::Revocation::MemoryStore.new
+      described_class.revocation_store = custom_store
+      token = described_class.encode(user_id: 1)
+      described_class.revoke(token)
+      expect(custom_store.size).to eq(1)
+    end
+
+    it 'resets to default MemoryStore' do
+      described_class.revocation_store = Philiprehberger::JwtKit::Revocation::MemoryStore.new
+      described_class.reset_revocation_store!
+      expect(described_class.revocation_store).to be_a(Philiprehberger::JwtKit::Revocation::MemoryStore)
+    end
+  end
+
+  describe 'new error classes' do
+    it 'InvalidAudience inherits from DecodeError' do
+      expect(Philiprehberger::JwtKit::InvalidAudience.superclass).to eq(Philiprehberger::JwtKit::DecodeError)
+    end
+
+    it 'TokenNotYetValid inherits from DecodeError' do
+      expect(Philiprehberger::JwtKit::TokenNotYetValid.superclass).to eq(Philiprehberger::JwtKit::DecodeError)
+    end
+  end
 end

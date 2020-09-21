@@ -2,7 +2,11 @@
 
 [![Tests](https://github.com/philiprehberger/rb-jwt-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-jwt-kit/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-jwt_kit.svg)](https://rubygems.org/gems/philiprehberger-jwt_kit)
+[![GitHub release](https://img.shields.io/github/v/release/philiprehberger/rb-jwt-kit)](https://github.com/philiprehberger/rb-jwt-kit/releases)
+[![Last updated](https://img.shields.io/github/last-commit/philiprehberger/rb-jwt-kit)](https://github.com/philiprehberger/rb-jwt-kit/commits/main)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-jwt-kit)](LICENSE)
+[![Bug Reports](https://img.shields.io/github/issues/philiprehberger/rb-jwt-kit/bug)](https://github.com/philiprehberger/rb-jwt-kit/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+[![Feature Requests](https://img.shields.io/github/issues/philiprehberger/rb-jwt-kit/enhancement)](https://github.com/philiprehberger/rb-jwt-kit/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
 [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Opinionated JWT toolkit with encoding, validation, refresh tokens, and revocation
@@ -99,6 +103,39 @@ Philiprehberger::JwtKit.decode(token)    # => raises RevokedToken
 
 Revocation uses an in-memory store keyed by JTI. The store is thread-safe.
 
+### Token Introspection
+
+Decode a token without verifying its signature — useful for inspecting claims or determining which key to use:
+
+```ruby
+result = Philiprehberger::JwtKit.peek(token)
+result[:header]   # => {"alg"=>"HS256", "typ"=>"JWT"}
+result[:payload]  # => {"user_id"=>42, "exp"=>..., "iat"=>..., "jti"=>...}
+```
+
+### Audience Validation
+
+```ruby
+Philiprehberger::JwtKit.configure do |c|
+  c.secret = 'secret'
+  c.audience = 'my-api'      # string or array of strings
+end
+
+# Tokens automatically include the `aud` claim
+token = Philiprehberger::JwtKit.encode(user_id: 42)
+# Decoding validates the audience matches configuration
+Philiprehberger::JwtKit.decode(token)  # => raises InvalidAudience if mismatch
+```
+
+### Custom Revocation Store
+
+Replace the default in-memory store with any object that responds to `#revoke`, `#revoked?`, `#clear`, and `#size`:
+
+```ruby
+# Example: plug in a Redis-backed store
+Philiprehberger::JwtKit.revocation_store = MyRedisRevocationStore.new
+```
+
 ## API
 
 | Method | Description |
@@ -112,6 +149,8 @@ Revocation uses an in-memory store keyed by JTI. The store is thread-safe.
 | `JwtKit.refresh(refresh_token)` | Issues a new access token from a refresh token |
 | `JwtKit.revoke(token)` | Revokes a token by its JTI |
 | `JwtKit.revoked?(token)` | Checks if a token has been revoked |
+| `JwtKit.peek(token)` | Decode header and payload without signature verification |
+| `JwtKit.revocation_store=` | Set a custom revocation store |
 
 ## Development
 
@@ -121,6 +160,13 @@ bundle exec rspec
 bundle exec rubocop
 ```
 
+## Support
+
+If you find this package useful, consider giving it a star on GitHub — it helps motivate continued maintenance and development.
+
+[![LinkedIn](https://img.shields.io/badge/Philip%20Rehberger-LinkedIn-0A66C2?logo=linkedin)](https://www.linkedin.com/in/philiprehberger)
+[![More packages](https://img.shields.io/badge/more-open%20source%20packages-blue)](https://philiprehberger.com/open-source-packages)
+
 ## License
 
-MIT
+[MIT](LICENSE)
