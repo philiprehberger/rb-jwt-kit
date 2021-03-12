@@ -119,9 +119,7 @@ module Philiprehberger
       #
       # @param store [#revoke, #revoked?, #clear, #size]
       # @return [void]
-      def revocation_store=(store)
-        @revocation_store = store
-      end
+      attr_writer :revocation_store
 
       # Resets the revocation store to the default MemoryStore.
       #

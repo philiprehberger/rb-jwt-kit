@@ -120,7 +120,7 @@ module Philiprehberger
 
         token_aud = Array(payload['aud'])
         expected_aud = Array(config.audience)
-        return if (expected_aud & token_aud).any?
+        return if expected_aud.intersect?(token_aud)
 
         raise InvalidAudience, "Invalid audience: expected #{config.audience}"
       end
