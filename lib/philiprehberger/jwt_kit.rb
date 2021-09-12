@@ -46,6 +46,17 @@ module Philiprehberger
         @configuration = Configuration.new
       end
 
+      # Validates a token and returns a result hash instead of raising.
+      #
+      # @param token [String] JWT token
+      # @return [Hash] { valid: Boolean, payload: Hash or nil, error: String or nil }
+      def validate(token)
+        payload = decode(token)
+        { valid: true, payload: payload, error: nil }
+      rescue DecodeError, RevokedToken => e
+        { valid: false, payload: nil, error: e.message }
+      end
+
       # Encodes a payload into a signed JWT token.
       #
       # @param payload [Hash] custom claims

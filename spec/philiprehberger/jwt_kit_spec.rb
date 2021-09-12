@@ -691,6 +691,95 @@ RSpec.describe Philiprehberger::JwtKit do
     end
   end
 
+  describe '.validate' do
+    it 'returns valid result for a good token' do
+      token = described_class.encode(user_id: 42)
+      result = described_class.validate(token)
+      expect(result[:valid]).to be true
+      expect(result[:payload]).to include('user_id' => 42)
+      expect(result[:error]).to be_nil
+    end
+
+    it 'returns invalid result for an expired token' do
+      described_class.configuration.expiration = -1
+      token = described_class.encode(user_id: 42)
+      result = described_class.validate(token)
+      expect(result[:valid]).to be false
+      expect(result[:payload]).to be_nil
+      expect(result[:error]).to eq('Token has expired')
+    end
+
+    it 'returns invalid result for a revoked token' do
+      token = described_class.encode(user_id: 42)
+      described_class.revoke(token)
+      result = described_class.validate(token)
+      expect(result[:valid]).to be false
+      expect(result[:payload]).to be_nil
+      expect(result[:error]).to eq('Token has been revoked')
+    end
+  end
+
+  describe 'key rotation' do
+    let(:secrets) do
+      [
+        { kid: 'key-1', secret: 'first-secret-key-at-least-32-chars!' },
+        { kid: 'key-2', secret: 'second-secret-key-at-least-32-chars' }
+      ]
+    end
+
+    before do
+      described_class.configure do |c|
+        c.secrets = secrets
+        c.issuer = 'test-app'
+      end
+    end
+
+    it 'encodes with secrets array and decodes finding correct key by kid' do
+      token = described_class.encode(user_id: 42)
+      result = described_class.peek(token)
+      expect(result[:header]['kid']).to eq('key-1')
+
+      payload = described_class.decode(token)
+      expect(payload['user_id']).to eq(42)
+    end
+
+    it 'decodes fails with unknown kid' do
+      token = described_class.encode(user_id: 42)
+      # Replace kid in header with unknown value
+      parts = token.split('.')
+      header = JSON.parse(Base64.urlsafe_decode64(parts[0]))
+      header['kid'] = 'unknown-key'
+      new_header = Base64.urlsafe_encode64(JSON.generate(header), padding: false)
+      tampered = "#{new_header}.#{parts[1]}.#{parts[2]}"
+      expect { described_class.decode(tampered) }.to raise_error(
+        Philiprehberger::JwtKit::InvalidSignature, /Unknown kid/
+      )
+    end
+  end
+
+  describe 'MemoryStore#cleanup!' do
+    let(:store) { Philiprehberger::JwtKit::Revocation::MemoryStore.new }
+
+    it 'removes old revocations' do
+      token = described_class.encode(user_id: 1)
+      store.revoke(token)
+      # Manipulate internal state to simulate old revocation
+      jti = described_class.peek(token)[:payload]['jti']
+      store.instance_variable_get(:@revoked)[jti] = Time.now.to_i - 7200
+      expect(store.size).to eq(1)
+      store.cleanup!(max_age: 3600)
+      expect(store.size).to eq(0)
+    end
+
+    it 'keeps recent revocations' do
+      token = described_class.encode(user_id: 1)
+      store.revoke(token)
+      store.cleanup!(max_age: 3600)
+      expect(store.size).to eq(1)
+      expect(store.revoked?(token)).to be true
+    end
+  end
+
   describe 'new error classes' do
     it 'InvalidAudience inherits from DecodeError' do
       expect(Philiprehberger::JwtKit::InvalidAudience.superclass).to eq(Philiprehberger::JwtKit::DecodeError)

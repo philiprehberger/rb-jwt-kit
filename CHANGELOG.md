@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-31
+
+### Added
+- Key rotation via `config.secrets` array with `kid` header matching
+- `JwtKit.validate(token)` returning result hash instead of raising
+- `MemoryStore#cleanup!(max_age:)` for expiring old revocation entries
+- GitHub issue templates, PR template, and Dependabot configuration
+
 ## [0.2.0] - 2026-03-27
 
 ### Added

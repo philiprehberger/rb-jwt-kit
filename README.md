@@ -127,6 +127,46 @@ token = Philiprehberger::JwtKit.encode(user_id: 42)
 Philiprehberger::JwtKit.decode(token)  # => raises InvalidAudience if mismatch
 ```
 
+### Token Validation
+
+Returns a result hash instead of raising exceptions:
+
+```ruby
+result = Philiprehberger::JwtKit.validate(token)
+# => { valid: true, payload: { "user_id" => 42, ... }, error: nil }
+
+result = Philiprehberger::JwtKit.validate(expired_token)
+# => { valid: false, payload: nil, error: "Token has expired" }
+```
+
+### Key Rotation
+
+Configure multiple secrets with key IDs for seamless key rotation:
+
+```ruby
+Philiprehberger::JwtKit.configure do |c|
+  c.secrets = [
+    { kid: "key-2024", secret: "new-secret-key" },   # Used for signing
+    { kid: "key-2023", secret: "old-secret-key" }    # Still accepted for verification
+  ]
+end
+
+# Encodes using the first secret, adds `kid` to the JWT header
+token = Philiprehberger::JwtKit.encode(user_id: 42)
+
+# Decoding reads `kid` from the header and finds the matching secret
+payload = Philiprehberger::JwtKit.decode(token)
+```
+
+### Revocation Cleanup
+
+Remove old revocation entries to keep memory usage bounded:
+
+```ruby
+# Remove entries older than 1 hour
+Philiprehberger::JwtKit.revocation_store.cleanup!(max_age: 3600)
+```
+
 ### Custom Revocation Store
 
 Replace the default in-memory store with any object that responds to `#revoke`, `#revoked?`, `#clear`, and `#size`:
@@ -145,12 +185,14 @@ Philiprehberger::JwtKit.revocation_store = MyRedisRevocationStore.new
 | `JwtKit.reset_configuration!` | Resets configuration to defaults |
 | `JwtKit.encode(payload)` | Encodes a payload into a signed JWT token |
 | `JwtKit.decode(token)` | Decodes and validates a JWT token |
+| `JwtKit.validate(token)` | Validates a token, returns result hash instead of raising |
 | `JwtKit.token_pair(payload)` | Generates an access/refresh token pair |
 | `JwtKit.refresh(refresh_token)` | Issues a new access token from a refresh token |
 | `JwtKit.revoke(token)` | Revokes a token by its JTI |
 | `JwtKit.revoked?(token)` | Checks if a token has been revoked |
 | `JwtKit.peek(token)` | Decode header and payload without signature verification |
 | `JwtKit.revocation_store=` | Set a custom revocation store |
+| `MemoryStore#cleanup!(max_age:)` | Remove revocation entries older than max_age seconds |
 
 ## Development
 
