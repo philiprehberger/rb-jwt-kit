@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Opinionated JWT toolkit with encoding, validation, refresh tokens, and revocation'
   spec.description = 'A complete JWT toolkit for Ruby. Encode and decode tokens with automatic claim ' \
-                       'management (exp, iat, iss, jti), generate access/refresh token pairs, validate ' \
-                       'expiration and issuer, and revoke tokens — all without external dependencies.'
+                     'management (exp, iat, iss, jti), generate access/refresh token pairs, validate ' \
+                     'expiration and issuer, and revoke tokens — all without external dependencies.'
   spec.homepage = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-jwt_kit'
   spec.license = 'MIT'
 
