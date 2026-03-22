@@ -6,9 +6,9 @@ module Philiprehberger
     #
     # @example
     #   Philiprehberger::JwtKit.configure do |c|
-    #     c.secret = "my-secret-key"
+    #     c.secret = 'my-secret-key'
     #     c.algorithm = :hs256
-    #     c.issuer = "my-app"
+    #     c.issuer = 'my-app'
     #     c.expiration = 3600
     #   end
     class Configuration
@@ -37,7 +37,7 @@ module Philiprehberger
 
       # Returns the OpenSSL digest algorithm name.
       #
-      # @return [String] digest name (e.g. "SHA256")
+      # @return [String] digest name (e.g. 'SHA256')
       # @raise [Error] if the algorithm is unsupported
       def digest_algorithm
         case @algorithm
@@ -50,7 +50,7 @@ module Philiprehberger
 
       # Returns the JWT algorithm header value.
       #
-      # @return [String] algorithm name (e.g. "HS256")
+      # @return [String] algorithm name (e.g. 'HS256')
       def algorithm_name
         @algorithm.to_s.upcase
       end
