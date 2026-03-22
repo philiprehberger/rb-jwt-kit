@@ -16,10 +16,10 @@ module Philiprehberger
       # @raise [TokenExpired] if the token has expired
       # @raise [InvalidIssuer] if the issuer does not match the configuration
       def decode(token, config)
-        raise DecodeError, "Token must be a string" unless token.is_a?(String)
+        raise DecodeError, 'Token must be a string' unless token.is_a?(String)
 
-        parts = token.split(".")
-        raise DecodeError, "Invalid token format: expected 3 segments" unless parts.length == 3
+        parts = token.split('.')
+        raise DecodeError, 'Invalid token format: expected 3 segments' unless parts.length == 3
 
         header_segment, payload_segment, signature_segment = parts
 
@@ -32,7 +32,7 @@ module Philiprehberger
 
         payload
       rescue JSON::ParserError
-        raise DecodeError, "Invalid token: malformed JSON"
+        raise DecodeError, 'Invalid token: malformed JSON'
       end
 
       # Base64url-decodes a string.
@@ -42,7 +42,7 @@ module Philiprehberger
       def base64url_decode(data)
         Base64.urlsafe_decode64(data)
       rescue ArgumentError
-        raise DecodeError, "Invalid token: malformed base64"
+        raise DecodeError, 'Invalid token: malformed base64'
       end
 
       # Verifies the token signature.
@@ -53,7 +53,7 @@ module Philiprehberger
       # @raise [InvalidSignature] if the signature does not match
       def verify_signature!(signing_input, signature, config)
         expected = Encoder.sign(signing_input, config)
-        raise InvalidSignature, "Token signature is invalid" unless secure_compare(expected, signature)
+        raise InvalidSignature, 'Token signature is invalid' unless secure_compare(expected, signature)
       end
 
       # Validates the expiration claim.
@@ -61,10 +61,10 @@ module Philiprehberger
       # @param payload [Hash] decoded payload
       # @raise [TokenExpired] if the token has expired
       def validate_expiration!(payload)
-        exp = payload["exp"]
+        exp = payload['exp']
         return unless exp
 
-        raise TokenExpired, "Token has expired" if exp.to_i <= Time.now.to_i
+        raise TokenExpired, 'Token has expired' if exp.to_i <= Time.now.to_i
       end
 
       # Validates the issuer claim.
@@ -75,7 +75,7 @@ module Philiprehberger
       def validate_issuer!(payload, config)
         return unless config.issuer
 
-        raise InvalidIssuer, "Invalid issuer: expected #{config.issuer}" unless payload["iss"] == config.issuer
+        raise InvalidIssuer, "Invalid issuer: expected #{config.issuer}" unless payload['iss'] == config.issuer
       end
 
       # Constant-time string comparison to prevent timing attacks.
@@ -86,8 +86,8 @@ module Philiprehberger
       def secure_compare(a, b)
         return false unless a.bytesize == b.bytesize
 
-        left = a.unpack("C*")
-        right = b.unpack("C*")
+        left = a.unpack('C*')
+        right = b.unpack('C*')
         result = 0
         left.each_with_index { |byte, i| result |= byte ^ right[i] }
         result.zero?
