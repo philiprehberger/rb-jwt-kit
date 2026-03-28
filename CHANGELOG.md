@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-27
+
+### Added
+- Token introspection via `.peek(token)` — decode header and payload without signature verification
+- Audience (`aud`) claim support with `config.audience` setting and automatic validation
+- Not-before (`nbf`) claim — automatically included in tokens and validated on decode
+- Pluggable revocation store via `JwtKit.revocation_store=` setter (any object responding to `#revoke`, `#revoked?`, `#clear`, `#size`)
+- `InvalidAudience` error class for audience validation failures
+- `TokenNotYetValid` error class for not-before validation failures
+- Support section with LinkedIn and packages badges in README
+- All 8 standard badges in README
+
 ## [0.1.1] - 2026-03-24
 
 ### Changed

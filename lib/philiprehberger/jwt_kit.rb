@@ -19,6 +19,8 @@ module Philiprehberger
     class InvalidSignature < DecodeError; end
     class InvalidIssuer < DecodeError; end
     class InvalidToken < DecodeError; end
+    class InvalidAudience < DecodeError; end
+    class TokenNotYetValid < DecodeError; end
     class RevokedToken < DecodeError; end
 
     class << self
@@ -64,6 +66,16 @@ module Philiprehberger
         payload
       end
 
+      # Decodes a JWT token WITHOUT verifying the signature.
+      # Useful for inspecting the header and payload before choosing a key.
+      #
+      # @param token [String] JWT token
+      # @return [Hash] with :header and :payload keys
+      # @raise [DecodeError] if the token format is invalid
+      def peek(token)
+        Decoder.peek(token)
+      end
+
       # Generates an access/refresh token pair.
       #
       # @param payload [Hash] custom claims
@@ -98,12 +110,20 @@ module Philiprehberger
 
       # Returns the revocation store.
       #
-      # @return [Revocation::MemoryStore]
+      # @return [#revoke, #revoked?, #clear, #size]
       def revocation_store
         @revocation_store ||= Revocation::MemoryStore.new
       end
 
-      # Resets the revocation store.
+      # Sets a custom revocation store (must respond to #revoke, #revoked?, #clear, #size).
+      #
+      # @param store [#revoke, #revoked?, #clear, #size]
+      # @return [void]
+      def revocation_store=(store)
+        @revocation_store = store
+      end
+
+      # Resets the revocation store to the default MemoryStore.
       #
       # @return [Revocation::MemoryStore]
       def reset_revocation_store!

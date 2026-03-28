@@ -21,6 +21,9 @@ module Philiprehberger
       # @return [String, nil] optional issuer for the `iss` claim
       attr_accessor :issuer
 
+      # @return [String, Array<String>, nil] expected audience for the `aud` claim
+      attr_accessor :audience
+
       # @return [Integer] default TTL in seconds for access tokens
       attr_accessor :expiration
 
@@ -31,6 +34,7 @@ module Philiprehberger
         @secret = nil
         @algorithm = :hs256
         @issuer = nil
+        @audience = nil
         @expiration = 3600
         @refresh_expiration = 86_400 * 7
       end
