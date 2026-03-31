@@ -1,15 +1,13 @@
 # frozen_string_literal: true
 
-require 'set'
-
 module Philiprehberger
   module JwtKit
     # Token revocation support with an in-memory store.
     module Revocation
-      # Thread-safe in-memory revocation store backed by a Set.
+      # Thread-safe in-memory revocation store backed by a Hash.
       class MemoryStore
         def initialize
-          @revoked = Set.new
+          @revoked = {}
           @mutex = Mutex.new
         end
 
@@ -21,7 +19,7 @@ module Philiprehberger
           jti = extract_jti(token)
           return unless jti
 
-          @mutex.synchronize { @revoked.add(jti) }
+          @mutex.synchronize { @revoked[jti] = Time.now.to_i }
         end
 
         # Checks whether a token has been revoked.
@@ -32,7 +30,7 @@ module Philiprehberger
           jti = extract_jti(token)
           return false unless jti
 
-          @mutex.synchronize { @revoked.include?(jti) }
+          @mutex.synchronize { @revoked.key?(jti) }
         end
 
         # Clears all revoked tokens.
@@ -47,6 +45,16 @@ module Philiprehberger
         # @return [Integer]
         def size
           @mutex.synchronize { @revoked.size }
+        end
+
+        # Removes revocation entries older than max_age seconds.
+        #
+        # @param max_age [Integer] maximum age in seconds
+        # @return [self]
+        def cleanup!(max_age:)
+          cutoff = Time.now.to_i - max_age
+          @mutex.synchronize { @revoked.reject! { |_jti, ts| ts < cutoff } }
+          self
         end
 
         private

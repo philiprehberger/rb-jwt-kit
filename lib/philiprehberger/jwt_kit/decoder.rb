@@ -23,7 +23,8 @@ module Philiprehberger
 
         header_segment, payload_segment, signature_segment = parts
 
-        verify_signature!("#{header_segment}.#{payload_segment}", signature_segment, config)
+        signing_secret = resolve_secret(header_segment, config)
+        verify_signature!("#{header_segment}.#{payload_segment}", signature_segment, config, secret: signing_secret)
 
         payload = JSON.parse(base64url_decode(payload_segment))
 
@@ -66,14 +67,34 @@ module Philiprehberger
         raise DecodeError, 'Invalid token: malformed base64'
       end
 
+      # Resolves the signing secret from the secrets array by kid, or falls back to config.secret.
+      #
+      # @param header_segment [String] base64url-encoded header
+      # @param config [Configuration] JWT configuration
+      # @return [String, nil] the resolved secret
+      def resolve_secret(header_segment, config)
+        if config.secrets.is_a?(Array) && !config.secrets.empty?
+          header = JSON.parse(base64url_decode(header_segment))
+          kid = header['kid']
+          if kid
+            entry = config.secrets.find { |s| (s[:kid] || s['kid']) == kid }
+            raise InvalidSignature, "Unknown kid: #{kid}" unless entry
+
+            return entry[:secret] || entry['secret']
+          end
+        end
+        config.secret
+      end
+
       # Verifies the token signature.
       #
       # @param signing_input [String] header.payload string
       # @param signature [String] base64url-encoded signature
       # @param config [Configuration] JWT configuration
+      # @param secret [String, nil] optional secret override
       # @raise [InvalidSignature] if the signature does not match
-      def verify_signature!(signing_input, signature, config)
-        expected = Encoder.sign(signing_input, config)
+      def verify_signature!(signing_input, signature, config, secret: nil)
+        expected = Encoder.sign(signing_input, config, secret: secret)
         raise InvalidSignature, 'Token signature is invalid' unless secure_compare(expected, signature)
       end
 

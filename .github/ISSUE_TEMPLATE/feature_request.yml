@@ -1,0 +1,29 @@
+name: Feature Request
+description: Suggest a new feature for philiprehberger-jwt_kit
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the feature you'd like.
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe the problem this feature would solve.
+      placeholder: |
+        require "philiprehberger/jwt_kit"
+
+        # Example of how the feature would be used...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you've considered.
+    validations:
+      required: false

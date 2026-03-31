@@ -13,9 +13,18 @@ module Philiprehberger
       # @return [String] signed JWT token
       # @raise [Error] if no secret is configured
       def encode(payload, config)
-        raise Error, 'Secret is required for encoding' unless config.secret
+        signing_secret = if config.secrets.is_a?(Array) && !config.secrets.empty?
+                           config.secrets.first[:secret] || config.secrets.first['secret']
+                         else
+                           config.secret
+                         end
+        raise Error, 'Secret is required for encoding' unless signing_secret
 
         header = { 'alg' => config.algorithm_name, 'typ' => 'JWT' }
+        if config.secrets.is_a?(Array) && !config.secrets.empty?
+          kid = config.secrets.first[:kid] || config.secrets.first['kid']
+          header['kid'] = kid if kid
+        end
         now = Time.now.to_i
 
         claims = {
@@ -32,7 +41,7 @@ module Philiprehberger
         header_segment = base64url_encode(JSON.generate(header))
         payload_segment = base64url_encode(JSON.generate(merged))
         signing_input = "#{header_segment}.#{payload_segment}"
-        signature = sign(signing_input, config)
+        signature = sign(signing_input, config, secret: signing_secret)
 
         "#{signing_input}.#{signature}"
       end
@@ -49,10 +58,12 @@ module Philiprehberger
       #
       # @param data [String] data to sign
       # @param config [Configuration] JWT configuration
+      # @param secret [String, nil] optional secret override (defaults to config.secret)
       # @return [String] base64url-encoded signature
-      def sign(data, config)
+      def sign(data, config, secret: nil)
+        signing_key = secret || config.secret
         digest = OpenSSL::Digest.new(config.digest_algorithm)
-        signature = OpenSSL::HMAC.digest(digest, config.secret, data)
+        signature = OpenSSL::HMAC.digest(digest, signing_key, data)
         base64url_encode(signature)
       end
     end

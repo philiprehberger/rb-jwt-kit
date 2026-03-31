@@ -30,6 +30,9 @@ module Philiprehberger
       # @return [Integer] default TTL in seconds for refresh tokens
       attr_accessor :refresh_expiration
 
+      # @return [Array<Hash>, nil] array of { kid: String, secret: String } for key rotation
+      attr_accessor :secrets
+
       def initialize
         @secret = nil
         @algorithm = :hs256
@@ -37,6 +40,7 @@ module Philiprehberger
         @audience = nil
         @expiration = 3600
         @refresh_expiration = 86_400 * 7
+        @secrets = nil
       end
 
       # Returns the OpenSSL digest algorithm name.
