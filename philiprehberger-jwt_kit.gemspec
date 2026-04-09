@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors = ['Philip Rehberger']
   spec.email = ['me@philiprehberger.com']
 
-  spec.summary = 'Opinionated JWT toolkit with encoding, validation, refresh tokens, and revocation'
+  spec.summary = 'Opinionated JWT toolkit for Ruby — secure by default, with support for encoding, validation, refresh tokens, revocation, and key rotation'
   spec.description = 'A complete JWT toolkit for Ruby. Encode and decode tokens with automatic claim ' \
                      'management (exp, iat, iss, jti), generate access/refresh token pairs, validate ' \
                      'expiration and issuer, and revoke tokens — all without external dependencies.'
