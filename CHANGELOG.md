@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-15
+
+### Added
+- `JwtKit.expired?(token)` — check a token's `exp` claim without verifying the signature
+
 ## [0.3.2] - 2026-04-09
 
 ### Fixed

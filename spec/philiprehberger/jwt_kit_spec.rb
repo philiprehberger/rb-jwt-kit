@@ -691,6 +691,23 @@ RSpec.describe Philiprehberger::JwtKit do
     end
   end
 
+  describe '.expired?' do
+    it 'returns false for a fresh token' do
+      token = described_class.encode(user_id: 1)
+      expect(described_class.expired?(token)).to be false
+    end
+
+    it 'returns true for an expired token' do
+      described_class.configuration.expiration = -1
+      token = described_class.encode(user_id: 1)
+      expect(described_class.expired?(token)).to be true
+    end
+
+    it 'returns true for a malformed token' do
+      expect(described_class.expired?('not.a.token')).to be true
+    end
+  end
+
   describe '.validate' do
     it 'returns valid result for a good token' do
       token = described_class.encode(user_id: 42)

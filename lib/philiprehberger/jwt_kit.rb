@@ -57,6 +57,22 @@ module Philiprehberger
         { valid: false, payload: nil, error: e.message }
       end
 
+      # Checks whether a token's `exp` claim is in the past without verifying the signature.
+      # Useful for proactive refresh decisions. Returns `true` for malformed tokens or when
+      # `exp` is missing.
+      #
+      # @param token [String] JWT token
+      # @return [Boolean]
+      def expired?(token)
+        payload = peek(token)[:payload]
+        exp = payload['exp']
+        return true unless exp.is_a?(Numeric)
+
+        Time.now.to_i >= exp
+      rescue DecodeError
+        true
+      end
+
       # Encodes a payload into a signed JWT token.
       #
       # @param payload [Hash] custom claims

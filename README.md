@@ -108,6 +108,15 @@ result[:header]   # => {"alg"=>"HS256", "typ"=>"JWT"}
 result[:payload]  # => {"user_id"=>42, "exp"=>..., "iat"=>..., "jti"=>...}
 ```
 
+### Expiration Check
+
+Check whether a token's `exp` claim is in the past without verifying the signature:
+
+```ruby
+Philiprehberger::JwtKit.expired?(token)  # => false
+# Use to decide whether to refresh before the authoritative decode
+```
+
 ### Audience Validation
 
 ```ruby
@@ -186,6 +195,7 @@ Philiprehberger::JwtKit.revocation_store = MyRedisRevocationStore.new
 | `JwtKit.revoke(token)` | Revokes a token by its JTI |
 | `JwtKit.revoked?(token)` | Checks if a token has been revoked |
 | `JwtKit.peek(token)` | Decode header and payload without signature verification |
+| `JwtKit.expired?(token)` | Check `exp` claim without verifying the signature |
 | `JwtKit.revocation_store=` | Set a custom revocation store |
 | `MemoryStore#cleanup!(max_age:)` | Remove revocation entries older than max_age seconds |
 
