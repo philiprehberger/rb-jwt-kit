@@ -4,6 +4,20 @@ module Philiprehberger
   module JwtKit
     # Token revocation support with an in-memory store.
     module Revocation
+      # Extracts the JTI claim from a JWT token without verifying its signature.
+      #
+      # @param token [String] JWT token
+      # @return [String, nil] the JTI, or nil if the token is malformed
+      def self.extract_jti(token)
+        parts = token.split('.')
+        return nil unless parts.length == 3
+
+        payload = JSON.parse(Base64.urlsafe_decode64(parts[1]))
+        payload['jti']
+      rescue JSON::ParserError, ArgumentError
+        nil
+      end
+
       # Thread-safe in-memory revocation store backed by a Hash.
       class MemoryStore
         def initialize
@@ -60,13 +74,7 @@ module Philiprehberger
         private
 
         def extract_jti(token)
-          parts = token.split('.')
-          return nil unless parts.length == 3
-
-          payload = JSON.parse(Base64.urlsafe_decode64(parts[1]))
-          payload['jti']
-        rescue JSON::ParserError, ArgumentError
-          nil
+          Revocation.extract_jti(token)
         end
       end
     end

@@ -806,4 +806,73 @@ RSpec.describe Philiprehberger::JwtKit do
       expect(Philiprehberger::JwtKit::TokenNotYetValid.superclass).to eq(Philiprehberger::JwtKit::DecodeError)
     end
   end
+
+  describe 'lifecycle callbacks' do
+    it 'fires on_encode after a successful encode with token and payload' do
+      received = {}
+      described_class.configuration.on_encode do |token, payload|
+        received[:token] = token
+        received[:payload] = payload
+      end
+      token = described_class.encode(user_id: 7)
+      expect(received[:token]).to eq(token)
+      expect(received[:payload]).to include('user_id' => 7)
+      expect(received[:payload]).to include('jti', 'exp', 'iat')
+    end
+
+    it 'fires on_decode after a successful decode with the payload' do
+      received = nil
+      described_class.configuration.on_decode { |payload| received = payload }
+      token = described_class.encode(user_id: 99)
+      described_class.decode(token)
+      expect(received).not_to be_nil
+      expect(received).to include('user_id' => 99)
+    end
+
+    it 'fires on_refresh after a successful refresh with the new access token' do
+      received = nil
+      described_class.configuration.on_refresh { |new_token| received = new_token }
+      _access, refresh = described_class.token_pair(user_id: 5)
+      new_token = described_class.refresh(refresh)
+      expect(received).to eq(new_token)
+      expect(received).to be_a(String)
+    end
+
+    it 'fires on_revoke after a successful revoke with the token jti' do
+      received = nil
+      described_class.configuration.on_revoke { |jti| received = jti }
+      token = described_class.encode(user_id: 11)
+      expected_jti = described_class.peek(token)[:payload]['jti']
+      described_class.revoke(token)
+      expect(received).to eq(expected_jti)
+      expect(received).not_to be_nil
+    end
+
+    it 'swallows errors raised inside the on_encode callback' do
+      described_class.configuration.on_encode { |_, _| raise 'callback boom' }
+      expect { described_class.encode(user_id: 1) }.not_to raise_error
+    end
+
+    it 'swallows errors raised inside the on_decode callback' do
+      described_class.configuration.on_decode { |_| raise 'callback boom' }
+      token = described_class.encode(user_id: 1)
+      expect { described_class.decode(token) }.not_to raise_error
+    end
+
+    it 'swallows errors raised inside the on_refresh callback' do
+      described_class.configuration.on_refresh { |_| raise 'callback boom' }
+      _access, refresh = described_class.token_pair(user_id: 1)
+      expect { described_class.refresh(refresh) }.not_to raise_error
+    end
+
+    it 'swallows errors raised inside the on_revoke callback' do
+      described_class.configuration.on_revoke { |_| raise 'callback boom' }
+      token = described_class.encode(user_id: 1)
+      expect { described_class.revoke(token) }.not_to raise_error
+    end
+
+    it 'is a no-op when no callback is registered' do
+      expect { described_class.encode(user_id: 1) }.not_to raise_error
+    end
+  end
 end

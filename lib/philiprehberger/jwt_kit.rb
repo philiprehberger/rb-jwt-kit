@@ -125,6 +125,8 @@ module Philiprehberger
       # @return [void]
       def revoke(token)
         revocation_store.revoke(token)
+        jti = Revocation.extract_jti(token)
+        configuration.fire_on_revoke(jti)
       end
 
       # Checks whether a token has been revoked.

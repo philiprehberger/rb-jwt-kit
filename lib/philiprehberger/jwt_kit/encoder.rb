@@ -43,7 +43,9 @@ module Philiprehberger
         signing_input = "#{header_segment}.#{payload_segment}"
         signature = sign(signing_input, config, secret: signing_secret)
 
-        "#{signing_input}.#{signature}"
+        token = "#{signing_input}.#{signature}"
+        config.fire_on_encode(token, merged)
+        token
       end
 
       # Base64url-encodes a string without padding.

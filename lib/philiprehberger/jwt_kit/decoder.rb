@@ -33,6 +33,7 @@ module Philiprehberger
         validate_issuer!(payload, config)
         validate_audience!(payload, config)
 
+        config.fire_on_decode(payload)
         payload
       rescue JSON::ParserError
         raise DecodeError, 'Invalid token: malformed JSON'

@@ -34,7 +34,9 @@ module Philiprehberger
         raise InvalidToken, 'Token is not a refresh token' unless payload['type'] == 'refresh'
 
         new_payload = payload.except('exp', 'nbf', 'iat', 'jti', 'iss', 'aud', 'type')
-        Encoder.encode(new_payload, config)
+        new_token = Encoder.encode(new_payload, config)
+        config.fire_on_refresh(new_token)
+        new_token
       end
     end
   end

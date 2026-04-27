@@ -180,6 +180,34 @@ Replace the default in-memory store with any object that responds to `#revoke`, 
 Philiprehberger::JwtKit.revocation_store = MyRedisRevocationStore.new
 ```
 
+### Lifecycle Callbacks
+
+Hook into encode, decode, refresh, and revoke without monkey-patching. Useful for audit logging, metrics, and tracing:
+
+```ruby
+Philiprehberger::JwtKit.configure do |c|
+  c.secret = 'your-secret-key'
+
+  c.on_encode do |token, payload|
+    Metrics.increment('jwt.encoded', tags: { iss: payload['iss'] })
+  end
+
+  c.on_decode do |payload|
+    Audit.log('jwt.decoded', user_id: payload['user_id'], jti: payload['jti'])
+  end
+
+  c.on_refresh do |new_token|
+    Metrics.increment('jwt.refreshed')
+  end
+
+  c.on_revoke do |jti|
+    Audit.log('jwt.revoked', jti: jti)
+  end
+end
+```
+
+Callbacks fire only after a successful operation. Exceptions raised inside a callback are swallowed so they cannot break the calling JWT operation.
+
 ## API
 
 | Method | Description |
@@ -198,6 +226,10 @@ Philiprehberger::JwtKit.revocation_store = MyRedisRevocationStore.new
 | `JwtKit.expired?(token)` | Check `exp` claim without verifying the signature |
 | `JwtKit.revocation_store=` | Set a custom revocation store |
 | `MemoryStore#cleanup!(max_age:)` | Remove revocation entries older than max_age seconds |
+| `Configuration#on_encode { \|token, payload\| ... }` | Register a callback fired after a successful encode |
+| `Configuration#on_decode { \|payload\| ... }` | Register a callback fired after a successful decode |
+| `Configuration#on_refresh { \|new_token\| ... }` | Register a callback fired after a successful refresh |
+| `Configuration#on_revoke { \|jti\| ... }` | Register a callback fired after a successful revoke |
 
 ## Development
 
