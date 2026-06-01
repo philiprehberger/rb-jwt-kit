@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-31
+
+### Added
+- `JwtKit.time_to_expiry(token)` returns the seconds remaining until the token's `exp` claim. Negative for already-expired tokens; `nil` for malformed tokens or tokens without a numeric `exp`. Pairs with `expired?` for pre-emptive refresh scheduling.
+- README now includes the standard package card image after the badges.
+
 ## [0.5.0] - 2026-04-26
 
 ### Added

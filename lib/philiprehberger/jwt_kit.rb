@@ -73,6 +73,23 @@ module Philiprehberger
         true
       end
 
+      # Seconds remaining until a token's `exp` claim. Does not verify the
+      # signature. Returns a negative integer for already-expired tokens and
+      # `nil` for malformed tokens or tokens without a numeric `exp` claim.
+      # Useful for scheduling a refresh before expiration rather than after.
+      #
+      # @param token [String] JWT token
+      # @return [Integer, nil] seconds remaining, or nil when undeterminable
+      def time_to_expiry(token)
+        payload = peek(token)[:payload]
+        exp = payload['exp']
+        return nil unless exp.is_a?(Numeric)
+
+        exp.to_i - Time.now.to_i
+      rescue DecodeError
+        nil
+      end
+
       # Encodes a payload into a signed JWT token.
       #
       # @param payload [Hash] custom claims

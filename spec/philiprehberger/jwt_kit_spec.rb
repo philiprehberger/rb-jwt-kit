@@ -708,6 +708,26 @@ RSpec.describe Philiprehberger::JwtKit do
     end
   end
 
+  describe '.time_to_expiry' do
+    it 'returns a positive integer for a fresh token' do
+      token = described_class.encode(user_id: 1)
+      remaining = described_class.time_to_expiry(token)
+      expect(remaining).to be_a(Integer)
+      expect(remaining).to be > 0
+      expect(remaining).to be <= described_class.configuration.expiration
+    end
+
+    it 'returns a negative integer for an expired token' do
+      described_class.configuration.expiration = -10
+      token = described_class.encode(user_id: 1)
+      expect(described_class.time_to_expiry(token)).to be < 0
+    end
+
+    it 'returns nil for a malformed token' do
+      expect(described_class.time_to_expiry('not.a.token')).to be_nil
+    end
+  end
+
   describe '.validate' do
     it 'returns valid result for a good token' do
       token = described_class.encode(user_id: 42)

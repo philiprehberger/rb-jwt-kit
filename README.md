@@ -4,6 +4,8 @@
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-jwt_kit.svg)](https://rubygems.org/gems/philiprehberger-jwt_kit)
 [![Last updated](https://img.shields.io/github/last-commit/philiprehberger/rb-jwt-kit)](https://github.com/philiprehberger/rb-jwt-kit/commits/main)
 
+![philiprehberger-jwt_kit](https://raw.githubusercontent.com/philiprehberger/rb-jwt-kit/main/package-card.webp)
+
 Opinionated JWT toolkit for Ruby — secure by default, with support for encoding, validation, refresh tokens, revocation, and key rotation
 
 ## Requirements
@@ -117,6 +119,16 @@ Philiprehberger::JwtKit.expired?(token)  # => false
 # Use to decide whether to refresh before the authoritative decode
 ```
 
+### Time to Expiry
+
+Get the seconds remaining until the token's `exp` claim. Negative when expired, `nil` when the token is malformed or has no numeric `exp`. Useful for scheduling pre-emptive refreshes rather than reacting after the fact:
+
+```ruby
+Philiprehberger::JwtKit.time_to_expiry(token)  # => 3599
+# refresh when fewer than 60 seconds remain
+Philiprehberger::JwtKit.refresh(refresh_token) if Philiprehberger::JwtKit.time_to_expiry(token).to_i < 60
+```
+
 ### Audience Validation
 
 ```ruby
@@ -224,6 +236,7 @@ Callbacks fire only after a successful operation. Exceptions raised inside a cal
 | `JwtKit.revoked?(token)` | Checks if a token has been revoked |
 | `JwtKit.peek(token)` | Decode header and payload without signature verification |
 | `JwtKit.expired?(token)` | Check `exp` claim without verifying the signature |
+| `JwtKit.time_to_expiry(token)` | Seconds remaining until `exp`; negative when expired, nil when unknown |
 | `JwtKit.revocation_store=` | Set a custom revocation store |
 | `MemoryStore#cleanup!(max_age:)` | Remove revocation entries older than max_age seconds |
 | `Configuration#on_encode { \|token, payload\| ... }` | Register a callback fired after a successful encode |
